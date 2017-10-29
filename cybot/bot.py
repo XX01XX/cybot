@@ -159,52 +159,61 @@ class Client(BaseNamespace):
         if(args[0]):
             wallet = Wallet(msg.username)
             timer = Timer(msg.username, 'slots')
-            cost = 0
+            bet = 0
             if args[0][0].isdigit():
-                cost = -abs(int(args[0][0]))
+                bet = -abs(int(args[0][0]))
             else:
                 self.sendmsg('Please place a numeric bet.')
                 return
 
             chk = timer.check(self.timeout['slots'])
             if(not chk['ready']):
-                timetil = int(chk['timetil'] / 60)
-                self.sendmsg('Try again in {} minute(s).'.format(timetil))
+                timetil = int(chk['timetil'])+1
+                self.sendmsg('Try again in {} second(s).'.format(timetil))
                 return
             else:
-                cost = abs(int(args[0][0]))
-                if wallet.balance >= cost:
-                    wallet.transaction(-cost)
+                bet = abs(int(args[0][0]))
+                if wallet.balance >= bet:
+                    wallet.transaction(-bet)
                     serverWallet = Wallet('{{server}}')
                     x = int(random.triangular(0, 6, 2))
                     z = int(random.triangular(0, 6, 2))
                     y = int(random.triangular(0, 6, 2))
                     prizemsg = ":botchat3:"
-                    translate = ['🍇', '🍒', '🍋', '🍌', '🂻', '♦']
+                    translate = ['🍇', '🍒', '🍋', '🍌', '💰', '💩']
                     prizemsg = "| {} | {} | {} |\n".format(
                         translate[x], translate[y], translate[z])
 
                     if 5 in (x, y, z) and (x == y == z):
-                        cost = serverWallet.balance
+                        prize = serverWallet.balance
                         serverWallet.transaction(-abs(serverWallet.balance))
+                        wallet.transaction(prize)
                         prizemsg += '{} hit the jackpot! They have earned {} squids!'.format(
                             msg.username, cost)
                     elif (x == y == z) and max(x, y, z) < 4:
-                        wallet.transaction(cost * 3)
-                        prizemsg += '{} matches 3 (three) fruits! [3x] Multiplyer (Bal: {})'.format(
-                            msg.username, wallet.balance)
+                        prize = (bet * 3)
+                        wallet.transaction(prize)
+                        serverWallet.transaction(-prize)
+                        prizemsg += '{} matches 3 (three) fruits! [3x] Multiplyer (Prize: {} Bal: {})'.format(
+                            msg.username, prize, wallet.balance)
                     elif 5 in (x,y,z) and len({x,y,z})==2:
-                        wallet.transaction(cost*2)
-                        prizemsg += '{} got a jack and two matches. [2x] (Bal: {})'.format(msg.username, wallet.balance)
+                        prize = (bet*2) 
+                        wallet.transaction(prize)
+                        serverWallet.transaction(-prize)
+                        prizemsg += '{} got a moneybag and two matches. [2x] (Prize: {} Bal: {})'.format(msg.username, prize, wallet.balance)
                     elif 5 in (x, y, z) and len({x, y, z}) == 3:
-                        wallet.transaction(cost)
-                        prizemsg += '{} breaks even with 1 (one) jack. [1x] (Bal: {})'.format( msg.username, wallet.balance)
+                        prize = bet
+                        wallet.transaction(prize)
+                        serverWallet.transaction(-prize)
+                        prizemsg += '{} breaks even with 1 (one) moneybag. [1x] (Bal: {})'.format( msg.username, wallet.balance)
                     elif len({x, y, z}) == 2:
-                        wallet.transaction(2 * cost)
-                        prizemsg += '{} matches 2! [2x] Multiplyer (Bal: {})'.format(
-                            msg.username, wallet.balance)
+                        prize = (2*bet)
+                        wallet.transaction(prize)
+                        serverWallet.transaction(-prize)
+                        prizemsg += '{} matches 2! [2x] Multiplyer (Prize: {} Bal: {})'.format(
+                            msg.username, prize, wallet.balance)
                     else:
-                        serverWallet.transaction(cost)
+                        serverWallet.transaction(bet)
                         prizemsg += '{}, better luck next time. (Bal: {})'.format(
                             msg.username, wallet.balance)
                     self.sendmsg(prizemsg)
@@ -229,10 +238,10 @@ class Client(BaseNamespace):
 
     def chat_nq(self, msg, *args):
         w = Wallet(msg.username)
-        if(w.balance >= 1000):
-            w.transaction(-1000)
+        if(w.balance >= 100):
+            w.transaction(-100)
             self.question = None
-            self.sendmsg('{} spent 1000 squids to skip the question.\
+            self.sendmsg('{} spent 100 squids to skip the question.\
                     ({})'.format(msg.username, w.balance))
 
     def chat_a(self, msg, *args):
